@@ -1,7 +1,9 @@
+from collections import OrderedDict
+
 import numpy as np
 
 from ..core import util, Dataset, Dimension
-from ..element import Bars
+from ..element import Bars, Element
 from ..element.util import categorical_aggregate2d
 from .util import get_axis_padding
 
@@ -136,6 +138,10 @@ class BarsMixin(object):
         stacked bar heights, adjusting the bar baseline
         and forcing the x-axis to be categorical.
         """
+        if self.stacked:  # stacked is deprecated and slotted for removal
+            self.param.warning(
+                "Boolean parameter stacked is deprecated, used dimension name parameter stacker instead")
+        
         if self.batched:
             overlay = self.current_frame
             element = Bars(overlay.table(), kdims=element.kdims+overlay.kdims,
@@ -158,6 +164,15 @@ class BarsMixin(object):
             pos_range = ds.select(**{vdim: (0, None)}).aggregate(xdim, function=np.sum).range(vdim)
             neg_range = ds.select(**{vdim: (None, 0)}).aggregate(xdim, function=np.sum).range(vdim)
             y0, y1 = util.max_range([pos_range, neg_range])
+        elif self.stacker:
+            ds = Dataset(element)
+            pos_range = (ds.groupby(self.stacker)
+                         .select(**{vdim: (0, None)})
+                         .collapse(self.stacker, function=np.sum).range(vdim))
+            neg_range = (ds.groupby(self.stacker)
+                         .select(**{vdim: (None, 0)})
+                         .collapse(self.stacker, function=np.sum).range(vdim))
+            y0, y1 = util.max_range([pos_range, neg_range])
         else:
             y0, y1 = ranges[vdim]['combined']
 
@@ -170,7 +185,7 @@ class BarsMixin(object):
         y0, y1 = util.dimension_range(y0, y1, self.ylim, (None, None))
         return ('', y0, '', y1)
 
-    def _get_coords(self, element, ranges, as_string=True):
+    def _get_coords(self, element: Element, ranges: OrderedDict, as_string: bool = True):
         """
         Get factors for categorical axes.
         """
@@ -223,3 +238,12 @@ class BarsMixin(object):
             c_is_str = xvals.dtype.kind in 'SU' or not as_string
             xvals = [x if c_is_str else xdim.pprint_value(x) for x in xvals]
             return xvals, None
+    
+    # def _calculate_xvals(element: Element, ranges: OrderedDict, as_string: bool, xdim: Dimension,):
+    #     if ranges.get(xdim.name, {}).get('factors') is not None:
+    #         xvals = ranges[xdim.name]['factors']
+    #     else:
+    #         xvals = element.dimension_values(0, False)
+    #     xvals = np.asarray(xvals)
+    #     c_is_str = xvals.dtype.kind in 'SU' or not as_string
+    #     xvals = [x if c_is_str else xdim.pprint_value(x) for x in xvals]

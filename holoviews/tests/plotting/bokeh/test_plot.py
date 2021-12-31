@@ -51,6 +51,10 @@ class TestBokehPlot(ComparisonTestCase):
         for plot, padding in self._padding.items():
             plot.padding = padding
 
+    def _get_plot_state(self, element):
+        fig_dict = bokeh_renderer.get_plot_state(element)
+        return fig_dict
+
     def _test_colormapping(self, element, dim, log=False):
         plot = bokeh_renderer.get_plot(element)
         plot.initialize_plot()

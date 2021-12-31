@@ -771,8 +771,8 @@ class BarPlot(BarsMixin, ColorbarPlot, LegendPlot):
     multi_level = param.Boolean(default=True, doc="""
        Whether the Bars should be grouped into a second categorical axis level.""")
 
-    stacked = param.Boolean(default=False, doc="""
-       Whether the bars should be stacked or grouped.""")
+    stacker = param.String(default=None, doc="""
+        Key dimension to stack.""")
 
     # Deprecated parameters
 
@@ -781,6 +781,9 @@ class BarPlot(BarsMixin, ColorbarPlot, LegendPlot):
         Deprecated in favor of color style mapping, e.g. `color=dim('color')`""")
 
     selection_display = BokehOverlaySelectionDisplay()
+
+    stacked = param.Boolean(default=False, doc="""
+        Whether the bars should be stacked or grouped.""")
 
     style_opts = (base_properties + fill_properties + line_properties +
                   ['bar_width', 'cmap'])
